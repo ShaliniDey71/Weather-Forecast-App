@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Atmos Feel</title>
+    <link rel="stylesheet" href="style.css"/>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="shortcut icon" href="images/title_logo.png" type="image/x-icon">
+</head>
+<body>
+    <div class="container">  
+        <div class="weather-card">
+            <div class="head-area"></div>
+            <div class="branding-container">
+                 <div class="logo-area">
+                 <div class="logo"></div>
+            </div>
+            <div class="tag-line-area">
+                <div class="tag-line">Beyond Temperature. Into Experience.</div>
+            </div>
+            </div>
+            <br><br>
+            <div class="search-area">
+            <h4 class="enter-text">Enter your location</h4>
+            <input id="search-input" type="text" placeholder="Enter city, state, country, etc." />
+            <button id="searchBtn">Search</button>
+            </div>
+            <div id="weather-info" class="weather-info">
+            </div>
+            <div id="forecast-container" class="forecast-container">
+            </div>
+            <div id="detailed-forecast" class="detailed-forecast" style="display: none;">
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+
+</body>
+
+</html>
