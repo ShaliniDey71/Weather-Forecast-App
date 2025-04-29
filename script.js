@@ -38,14 +38,10 @@ const weatherBackgrounds = {
     "squall": "images/thunderstorm.avif",
     "light rain": "images/light_rain.avif",
     "overcast clouds": "images/overcast_clouds.avif",
-    "light snow":"images/snow.avif",
-    "heavy intensity rain":"images/rain.jpg",
-    "moderate rain":"images/rain.jpg"
+    "light snow": "images/snow.avif",
+    "heavy intensity rain": "images/rain.jpg",
+    "moderate rain": "images/rain.jpg"
 };
-
-for (let key in weatherBackgrounds){
-    console.log(key+" : "+weatherBackgrounds[key]);
-}
 
 backToCurrentBtn.textContent = "Back to Current Weather";
 backToCurrentBtn.classList.add('back-to-current-btn');
@@ -75,7 +71,6 @@ function setBodyBackground(description) {
     body.style.backgroundPosition = 'center';
     body.style.backgroundRepeat = 'no-repeat';
 }
-
 
 function typePlaceholder() {
     if (!typingActive) return;
@@ -119,13 +114,34 @@ inputField.addEventListener('keydown', (e) => {
     }
 });
 
-searchBtn.addEventListener('click', () => {
+searchBtn.addEventListener('click', async () => {
     const query = inputField.value.trim();
-    if (query) {
-        fetchWeatherData(query);
-        fetchForecastData(query);
-    } else {
+    if (!query) {
         alert("Please enter a location.");
+        return;
+    }
+
+    try {
+        const [weatherResponse, forecastResponse] = await Promise.all([
+            fetchWeatherData(query),
+            fetchForecastData(query)
+        ]);
+
+        if (weatherResponse && forecastResponse) {
+            currentWeatherData = weatherResponse;
+            currentCityName = weatherResponse.name;
+            const today = new Date().toISOString().split('T')[0];
+            currentDayDetailedForecast = allForecastData.filter(item => {
+                const itemDate = new Date(item.dt * 1000).toISOString().split('T')[0];
+                return itemDate === today;
+            });
+
+            displayCurrentWeather(weatherResponse);
+            displayDetailedForecast(currentDayDetailedForecast, "Today's Detailed Forecast");
+        }
+    } catch (error) {
+        console.error("Failed to fetch weather or forecast data:", error);
+        showError("Failed to fetch weather or forecast data.");
     }
 });
 
@@ -135,19 +151,7 @@ async function fetchWeatherData(location) {
         const response = await fetch(apiUrl);
         const data = await response.json();
         if (response.ok) {
-            displayCurrentWeather(data);
-            currentCityName = data.name;
-            currentWeatherData = data;
-            backToCurrentBtn.style.display = 'none';
-
-            setTimeout(() => {
-                const today = new Date().toISOString().split('T')[0];
-                currentDayDetailedForecast = allForecastData.filter(item => {
-                    const itemDate = new Date(item.dt * 1000).toISOString().split('T')[0];
-                    return itemDate === today;
-                });
-                displayDetailedForecast(currentDayDetailedForecast, "Today's Detailed Forecast");
-            }, 300);
+            return data;
         } else {
             showError(data.message);
         }
@@ -165,6 +169,7 @@ async function fetchForecastData(location) {
         if (response.ok && data.list) {
             allForecastData = data.list;
             displayForecast(data.list);
+            return data;
         } else {
             console.error("Forecast error:", data.message || "Unknown error");
             forecastContainer.innerHTML = '<p class="error">Failed to fetch 5-day forecast.</p>';
@@ -185,16 +190,18 @@ function showError(msg) {
 }
 
 function displayCurrentWeather(data) {
-    const { name, main, weather, wind, rain, snow, pop, sys } = data;
+    const { name, main, weather, wind, sys } = data;
     const temperature = Math.round(main.temp);
-    const tempMin = Math.round(main.temp_min);
-    const tempMax = Math.round(main.temp_max);
     const description = weather[0].description;
     const humidity = main.humidity;
     const windSpeed = wind.speed;
-    const precipitationChance = pop !== undefined ? `${Math.round(pop * 100)}%` : 'N/A';
     const dateTime = new Date().toLocaleString();
     const countryCode = sys.country;
+
+    // Compute min/max from today's forecast data
+    const tempsToday = currentDayDetailedForecast.map(item => item.main.temp);
+    const tempMin = Math.round(Math.min(...tempsToday));
+    const tempMax = Math.round(Math.max(...tempsToday));
 
     const locationDisplay = countryCode ? `${name}, ${countryCode}` : name;
 
@@ -208,7 +215,6 @@ function displayCurrentWeather(data) {
         <p class="sky-condition">${description}</p>
         <div class="details">
             <p>Humidity: ${humidity}%</p>
-            <p>Chance of Rain: ${precipitationChance}</p>
             <p>Wind Speed: ${windSpeed} m/s</p>
         </div>
     `;
